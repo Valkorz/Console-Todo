@@ -1,4 +1,6 @@
 JAVA CONSOLE: TODO LIST APPLICATION FOR JAVA TRAINING
+
+
 --Project idea provided by ChatGPT so I could learn java and have this repository to refresh the language's syntax and functionalities.--
 
 
