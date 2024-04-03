@@ -1,7 +1,5 @@
 package com.content;
-import com.behavior.DateTime;
 import java.util.LinkedList;
-import com.content.Task;
 
 public abstract class TaskListing {
     public static LinkedList<Task> tasks = new LinkedList<Task>();
@@ -20,11 +18,17 @@ public abstract class TaskListing {
     }
 
     public static void UpdateTasks(){
+        
         for(int i = 0; i < tasks.size(); i++){
             Task task = tasks.get(i);
             if(task.completed == true){
-                
+                tasks.remove(i);
             }
+        }
+
+        for(int i = 0; i < tasks.size(); i++){
+            Task task = tasks.get(i);
+            task.index = i;
         }
     }
 }

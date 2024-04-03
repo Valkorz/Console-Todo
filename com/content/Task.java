@@ -1,12 +1,13 @@
 package com.content;
 import com.behavior.DateTime;
+import com.root.Main;
 
 public class Task {
     public String name;
     public String description;
     public Difficulty difficulty;
     public DateTime deadline;
-    private Boolean completed = false;
+    public Boolean completed = false;
     public Boolean late = false;
     public int index; //Index inside the TaskListing list
     private int points;
@@ -39,11 +40,7 @@ public class Task {
 
     public void Complete(){
         completed = true;
+        Main.ActiveUser.AddPoints(points);
+        TaskListing.UpdateTasks();
     }
-
-    public boolean IsCompleted(){
-        if(completed) return true;
-        else return false;
-    }
-
 }
