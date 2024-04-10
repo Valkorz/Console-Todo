@@ -1,9 +1,7 @@
 package com.root;
+import com.behavior.json.*;
 import java.util.LinkedList;
 import com.content.Task;
-import java.io.File;
-import java.io.IOException;
-import java.util.Scanner;
 
 public class UserData {
     public String name;
@@ -20,35 +18,14 @@ public class UserData {
     }
 
     public void SaveData(String path){
-        File dataFile = new File(path + "dataFile.txt");
-
-        try{
-            if(dataFile.createNewFile()){
-                System.out.println("File created: " + dataFile.getName());
-            }
-            else {
-                System.out.println("File already exists.");
-            }
-        }
-        catch(IOException e){
-            System.out.println("An error occurred.");
-            e.printStackTrace();
-        }   
+        JsonFile<String> file = new JsonFile<String>(path);
+        file.addElement("Points", points);
+        file.addElement("Name", name);
+        file.addElement("tasks", tasks);
     }
 
     public void LoadData(String path){
-        File dataFile = new File(path + "dataFile.txt");
-
-        try{
-            Scanner fileReader = new Scanner(dataFile);
-            while(fileReader.hasNextLine()){
-                String data = fileReader.nextLine();
-                
-            }
-        }
-        catch(IOException e){
-
-        }
+        
     }
     
 }

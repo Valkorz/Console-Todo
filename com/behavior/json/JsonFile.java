@@ -1,81 +1,120 @@
 package com.behavior.json;
-import java.io.File;
-import java.io.IOException;
-import java.util.Scanner;
+import java.util.ArrayList;
+import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.List;
+import java.lang.reflect.ParameterizedType;
 
-public class JsonFile {
+/*
+ * This class handles Json files. Uses keypairs to pair a key and a value of any type.
+ */
+
+public class JsonFile<T> {
     private String path;
-    private KeyPair[] keyPairs;
+    private ArrayList<KeyPair<T,Object>> elements;
     
-    public JsonFile(String path, int size){
+    public JsonFile(String path){
         this.path = path;
-        keyPairs = new KeyPair[size];
+        elements = new ArrayList<KeyPair<T,Object>>();
     }
 
-    public <T,G> void AddElement(T key, G value){
+    public void addElement(T key, Object value){
         
-        Rearrange();
-        boolean isArrayFull = false;
-        
-        //Go through each element of KeyPairs[]. If index is null (empty) or the key is the same, add element. Else increase size of array.
-        for(int i = 0; i < keyPairs.length; i++){
-        
-            if(keyPairs[i] == null || keyPairs[i].key == key){
-                keyPairs[i] = new KeyPair<T,G>(key, value);
+        boolean hasKey = false;
+        for(int i = 0; i < elements.size(); i++){
+            if(elements.get(i).key == key){
+                hasKey = true;
+                System.out.println("Element " + key.toString() + " already exists.");
                 break;
-            }
-            isArrayFull = true;
+            }         
         }
+
+        if(!hasKey){
+            elements.add(new KeyPair<T,Object>(key, value));
+        }
+    }
+
+    public void removeElement(T key){
         
-        if(isArrayFull){
-            KeyPair[] newPairs = new KeyPair[keyPairs.length + 1];
-            for(int i = 0; i < keyPairs.length; i++){
-                newPairs[i] = keyPairs[i];
-            }
-            newPairs[newPairs.length - 1] = new KeyPair<T,G>(key, value);
-            keyPairs = newPairs;
-        }
-    }
-
-    public <T> void RemoveElement(T key){
-
-        for(int i = 0; i < keyPairs.length; i++){
-            if(keyPairs[i].key == key){
-                keyPairs[i] = null;
+        boolean foundKey = false;
+        for(int i = 0; i < elements.size(); i++){
+            if(elements.get(i).key == key){
+                foundKey = true;
+                elements.remove(i);
                 break;
+            }         
+        }
+
+        if(!foundKey){
+            System.out.println("Element " + key.toString() + " not found.");
+        }
+    }
+
+    private String formatElement(KeyPair<T,Object> keyPair){
+        return String.format("{\"%s\":%s}", keyPair.key, keyPair.value);
+    }
+
+    public void serialize(){
+        try(BufferedWriter writer = new BufferedWriter(new FileWriter(path))){
+            for(int i = 0; i < elements.size(); i++){
+                writer.write(formatElement(elements.get(i)) + "\n");
             }
+
+        } catch (IOException e){
+            e.printStackTrace();
         }
-        Rearrange();
+
+        System.out.println("Saved data at " + path);
     }
 
-    public void Rearrange(){
-        //Rearrange array so that it pushes null values to the end
+    public static <T> JsonFile<T> deserialize(String path){
+        
+        JsonFile<T> json = new JsonFile<T>(path);
 
-        KeyPair[] newPairs = new KeyPair[keyPairs.length];
-        int nullCount = 0;
-        for(int i = 0; i < keyPairs.length; i++){
-            if(keyPairs[i] == null){
-                nullCount++;
+        try{
+            List<String> lines = Files.readAllLines(Paths.get(path));
+            System.out.println("Reading from file: " + path + "...");
+            for(String line : lines){
+
+                KeyPair<T,Object> pair = stringToKeyValue(line);
+                json.addElement(pair.key, pair.value);
+
+                System.out.println(line);
             }
-            else newPairs[i - nullCount] = keyPairs[i];
+        } catch (IOException e){
+            e.printStackTrace();
         }
-        keyPairs = newPairs;
+
+        return json;
     }
 
-    public int Count(){
-        int count = 0;
-        for(int i = 0; i < keyPairs.length; i++){
-            if(keyPairs[i] != null) count++;
-        }
-        return count;
+    private static <T> KeyPair<T,Object> stringToKeyValue(String str){
+        str = str.substring(1, str.length() -1);
+
+        Class<T> typeofKey = (Class<T>) ((ParameterizedType) KeyPair.class.getGenericSuperclass()).getActualTypeArguments()[0];
+
+        String[] keyValue = str.split(":");
+        String cleanedKey = keyValue[0].trim().replace("\"", "");
+        String cleanedValue = keyValue[1].trim();
+
+        return new KeyPair<T,Object>(castGenericTo(cleanedKey, typeofKey), cleanedValue);     
     }
 
-    public <T> Object GetValueFromKey(T key){
-        for(int i = 0; i < keyPairs.length; i++){
-            if(keyPairs[i].key == key) return keyPairs[i].value;
+    private static <T> T castGenericTo(Object val, Class<T> type){
+        if(type == String.class){
+            return type.cast(val);
         }
-        System.out.println("Could not find any objects of key: " + key.toString());
-        return null;
+        else if(type == Integer.class || type == int.class){
+            return type.cast(Integer.parseInt(val.toString()));
+        }
+        else if(type == Double.class || type == double.class){
+            return type.cast(Double.parseDouble(val.toString()));
+        }
+        else {
+            throw new IllegalArgumentException("Unsupported type: " + type);
+        }
     }
 }
